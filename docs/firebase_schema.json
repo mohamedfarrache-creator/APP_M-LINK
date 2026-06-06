@@ -1,0 +1,48 @@
+{
+  "Machines": {
+    "M-005": {
+      "id": "M-005",
+      "name": "ID_4",
+      "serial": "SER-M-005",
+      "project": "SEBN-MA",
+      "site": "plant 2",
+      "zone": "ID_4",
+      "mapAsset": "assets/maps/plant 2.jpg",
+      "mapX": 0.72,
+      "mapY": 0.60,
+      "status": "anomaly",
+      "nextKw": 16,
+      "machineType": "EQUIPEMENT DE TEST",
+      "drsNumbers": [
+        "TS1500.2018.401098-338",
+        "TS1500-2018-401099-047",
+        "TS1500-401098-MA45"
+      ],
+      "checklist": [
+        { "label": "Inspection visuelle", "done": true },
+        { "label": "Test capteurs", "done": false },
+        { "label": "Verification securite", "done": false },
+        { "label": "Nettoyage zone machine", "done": true }
+      ],
+      "updatedAt": "2026-04-14T17:30:00Z"
+    }
+  },
+  "Interventions": {
+    "INT-9001": {
+      "id": "INT-9001",
+      "machineId": "M-005",
+      "machineName": "ID_4",
+      "createdByUserId": "prev-1",
+      "createdByName": "Yassine Preventif",
+      "createdByRole": "preventive",
+      "type": "anomaly",
+      "priority": "urgent",
+      "title": "Capteur NOK",
+      "description": "Signal capteur instable pendant controle preventif.",
+      "createdAtIso": "2026-04-14T16:10:00Z",
+      "forKw": 16,
+      "isRead": false,
+      "status": "open"
+    }
+  }
+}

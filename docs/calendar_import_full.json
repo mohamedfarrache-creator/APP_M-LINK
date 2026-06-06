@@ -1,0 +1,196 @@
+﻿[
+    {
+        "project":  "GOLF A8",
+        "sourceFile":  "Calendrier préventive 2026 GOLF A8.xlsx",
+        "machineType":  "EQUIPEMENT DE TEST",
+        "drsNumbers":  [
+                           "TS1700.2018.401113-40",
+                           "TS1700.2018.401113-41",
+                           "TS1500-2018-401098-12",
+                           "TS1500.2018.401098-400",
+                           "TS1500-42",
+                           "TS1500-116",
+                           "TS1500.2018.401098-342",
+                           "TS1500-274",
+                           "TS1500-400057-54",
+                           "TS1500-400053-167",
+                           "TS1700-2018-401111-46",
+                           "TS1700-2018-401111-48"
+                       ],
+        "drsCount":  12
+    },
+    {
+        "project":  "HIGH VOLTAGE",
+        "sourceFile":  "Calendrier préventive 2026 HIGH VOLTAGE .xlsx",
+        "machineType":  "EQUIPEMENT DE TEST",
+        "drsNumbers":  [
+                           "TS1500.2018.401098-213",
+                           "TS1500.2018.401098-246"
+                       ],
+        "drsCount":  2
+    },
+    {
+        "project":  "ID_4",
+        "sourceFile":  "Calendrier préventive 2026 ID_4 \u0026 ID_BUZZ.xlsx",
+        "machineType":  "EQUIPEMENT DE TEST",
+        "drsNumbers":  [
+                           "TS1500.2018.401098-338",
+                           "TS1500-2018-401099-047",
+                           "TS1500.2018.401098.064",
+                           "TS1500.2018.401098.065",
+                           "TS1500.2018.401098-083",
+                           "TS1500.2018.401098-17",
+                           "TS1500-401098-MA45",
+                           "TS1500-401098-MA46",
+                           "TS1500-401098-MA47",
+                           "TS1500.2018.401098.141"
+                       ],
+        "drsCount":  10
+    },
+    {
+        "project":  "ID_7",
+        "sourceFile":  "Calendrier préventive 2026 ID_7.xlsx",
+        "machineType":  "EQUIPEMENT DE TEST",
+        "drsNumbers":  [
+                           "TS1500.401098-MA-01",
+                           "TS1500.401098-MA-02",
+                           "TS1500.401098-MA-03",
+                           "TS1500.401098-MA-04",
+                           "TS1500.2018.401098-093",
+                           "TS1500.2018.401098-332",
+                           "TS1500.2018.401098-410",
+                           "TS1500.2018.401098-420",
+                           "TS1500-401098-MA-10",
+                           "TS1500-401098-MA-11",
+                           "TS1500-401098-MA10",
+                           "TS1500-401098-10"
+                       ],
+        "drsCount":  12
+    },
+    {
+        "project":  "MEB_21",
+        "sourceFile":  "Calendrier préventive 2026 MEB_21.xlsx",
+        "machineType":  "T.E",
+        "drsNumbers":  [
+                           "TS1500-400053-037",
+                           "TS1500.2018.401098-303"
+                       ],
+        "drsCount":  2
+    },
+    {
+        "project":  "MEB_31",
+        "sourceFile":  "Calendrier préventive 2026 MEB_31.xlsx",
+        "machineType":  "EQUIPEMENT DE TEST",
+        "drsNumbers":  [
+                           "TS500*500.402561-MA-04",
+                           "TS500*500.402561-MA-05",
+                           "TS1500-401098-KM-13",
+                           "TS1500-401098-KM-14",
+                           "TS1500-400053-19",
+                           "TS1500.2018.401098-090",
+                           "TS1500.2018.401098-343",
+                           "TS-TABLE-402561-MA04",
+                           "TS1500.2018.401098-117"
+                       ],
+        "drsCount":  9
+    },
+    {
+        "project":  "POURCHE",
+        "sourceFile":  "Calendrier préventive 2026 PORSCHE.xlsx",
+        "machineType":  "EQUIPEMENT DE TEST",
+        "drsNumbers":  [
+                           "TS1500-400061-032",
+                           "TS1500-400053-043",
+                           "TS1500-400053-054"
+                       ],
+        "drsCount":  3
+    },
+    {
+        "project":  "RL-TAN",
+        "sourceFile":  "Calendrier Préventive 2026 RL-TAN.xlsx",
+        "machineType":  "Calendrier Des Préventives Systématiques Des Equipements De Test Q7/Q9 KM \u0026 VT RL pour l\u0027année 2026",
+        "drsNumbers":  [
+                           "TS1700-401113-12",
+                           "TS1500-401099-1",
+                           "TS1500.2018.401098-245",
+                           "TS1500.2018-401098-300",
+                           "TS1500.2018-401098-296",
+                           "TS1500-2018-401099-55",
+                           "TS1500-401099-001",
+                           "TS1500-400053-66",
+                           "TS1500-400053-14",
+                           "TS1500-401098-015",
+                           "TS1500.2018-401098-310",
+                           "TS1500-400053-MA96",
+                           "TS1500-400053-061",
+                           "TS1500-400053-007",
+                           "TS1500-400053-005",
+                           "TS1500.2018-401098-301",
+                           "TS1500-400053-057",
+                           "TS1500.2018.401098-295",
+                           "TS1500-2018.401098-268",
+                           "TS1500-392",
+                           "TS1500-400053-187",
+                           "TS1500-400053-150",
+                           "TS1500-400057",
+                           "TS1500-400053-140",
+                           "TS1500-400053-054",
+                           "TS1500-117",
+                           "TS1500-400053-174",
+                           "TS1500.2018-401098-309"
+                       ],
+        "drsCount":  28
+    },
+    {
+        "project":  "COCK-PIT",
+        "sourceFile":  "Calendrier préventive COCK-PIT.xlsx",
+        "machineType":  "EQUIPEMENT DE TEST",
+        "drsNumbers":  [
+                           "TS1700-401111-MA-14",
+                           "TS1700-401111-MA-13",
+                           "TS1500.2018.401098-390",
+                           "TS1700-401111-021"
+                       ],
+        "drsCount":  4
+    },
+    {
+        "project":  "Q7-Q9 KSK",
+        "sourceFile":  "Calendrier Préventive Q7-Q9 KSK.xlsx",
+        "machineType":  "EQUIPEMENT DE TEST KSK",
+        "drsNumbers":  [
+                           "TS TS1700-402197-MA01",
+                           "TS TS1700-402197-MA07",
+                           "TS TS1700-402197-MA08",
+                           "TS TS1700-402197-MA06",
+                           "TS TS1700-402197-MA04",
+                           "TS TS1700-402197-MA05",
+                           "TS TS1700-402197-MA02",
+                           "TS TS1700-402197-MA03",
+                           "TS1500-2018-401099-029",
+                           "TS TS1700-402197-MA09",
+                           "TS1500-401098.ALU-MA01"
+                       ],
+        "drsCount":  11
+    },
+    {
+        "project":  "T-ROC",
+        "sourceFile":  "Calendrier préventives 2026 T-ROC.xlsx",
+        "machineType":  "EQUIPEMENT DE TEST",
+        "drsNumbers":  [
+                           "TS1700-401112-21",
+                           "G0124244",
+                           "G0244517",
+                           "TS1500-400053-058",
+                           "G0026784",
+                           "TS1700-401111-16",
+                           "TS1700-401111-KM-18",
+                           "G0040053",
+                           "G0061661",
+                           "G0034504",
+                           "TS1500-401099-KM-15",
+                           "TS1400-401221-003",
+                           "G0015243"
+                       ],
+        "drsCount":  13
+    }
+]

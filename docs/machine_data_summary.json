@@ -1,0 +1,29 @@
+{
+  "filesDetected": [
+    "Calendrier préventive 2026 GOLF A8.csv",
+    "Calendrier-Préventive-2026-RL-TAN.csv",
+    "Calendrier-Préventive-Q7-Q9-KSK.csv",
+    "Calendrier-préventive-2026-HIGH-VOLTAGE-.csv",
+    "Calendrier-préventive-2026-ID_4-_-ID_BUZZ.csv",
+    "Calendrier-préventive-2026-ID_7.csv",
+    "Calendrier-préventive-2026-MEB_21.csv",
+    "Calendrier-préventive-2026-MEB_31.csv",
+    "Calendrier-préventive-2026-PORSCHE.csv",
+    "Calendrier-préventive-COCK-PIT.csv",
+    "Calendrier-préventives-2026-T-ROC.csv"
+  ],
+  "countsByNormalizedFile": {
+    "golfa8": 20,
+    "rltan": 34,
+    "q7q9ksk": 43,
+    "highvoltage": 41,
+    "id4idbuzz": 10,
+    "id7": 12,
+    "meb21": 2,
+    "meb31": 14,
+    "porsche": 4,
+    "cockpit": 5,
+    "stroc": 18
+  },
+  "totalGenerated": 203
+}
