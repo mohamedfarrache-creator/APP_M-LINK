@@ -1,0 +1,45 @@
+name: m_link_sebn
+description: Base mobile app for preventive and corrective maintenance management.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  csv: ^6.0.0
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.4.0
+  cloud_firestore: ^5.5.0
+  cloud_functions: ^5.1.0
+  intl: ^0.19.0
+  image_picker: ^1.1.2
+  sqflite: ^2.3.3
+  path: ^1.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: icon/mlink_sebn_icon.png
+  adaptive_icon_foreground: icon/mlink_sebn_icon.png
+  adaptive_icon_background: "#48CAE4"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - calendrier_csv/
+    - assets/calendars/
+    - assets/maps/plant 1.jpg
+    - assets/maps/plant 2.jpg
+    - assets/maps/satellite 1.jpg
+    - assets/maps/satellite 2.jpg
+    - assets/maps/satellite 3.jpg
