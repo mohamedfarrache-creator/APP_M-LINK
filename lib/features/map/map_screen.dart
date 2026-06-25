@@ -5,8 +5,9 @@ import 'package:flutter/services.dart';
 
 import '../../data/machine_data.dart';
 import '../../data/models/machine.dart';
-import '../../data/services/csv_maintenance_status_service.dart';
 import '../../data/repositories/maintenance_repository.dart';
+import '../../data/services/csv_maintenance_status_service.dart';
+
 class PlantMapView extends StatefulWidget {
   const PlantMapView({
     super.key,
@@ -23,7 +24,8 @@ class PlantMapView extends StatefulWidget {
   State<PlantMapView> createState() => _PlantMapViewState();
 }
 
-class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderStateMixin {
+class _PlantMapViewState extends State<PlantMapView>
+    with SingleTickerProviderStateMixin {
   static const List<_SitePlan> _sitePlans = <_SitePlan>[
     _SitePlan(
       siteName: 'Plant 1',
@@ -60,17 +62,20 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
   _MachineJumpTarget? _pendingJumpTarget;
   Size? _mapViewportSize;
   bool _loadingCsvStatuses = true;
-  Map<String, MachineStatus> _csvStatusByMachineId = const <String, MachineStatus>{};
+  Map<String, MachineStatus> _csvStatusByMachineId =
+      const <String, MachineStatus>{};
   final Map<String, Offset> _draftLocationOverrides = <String, Offset>{};
   late final Map<String, Map<String, MachineLocation>> _locationIndex;
   late final TransformationController _mapTransformController;
   late final AnimationController _pinPulseController;
   Timer? _pinPulseStopTimer;
-  final TextEditingController _machineSearchController = TextEditingController();
+  final TextEditingController _machineSearchController =
+      TextEditingController();
   final FocusNode _machineSearchFocusNode = FocusNode();
   final GlobalKey _mapKey = GlobalKey();
 
-  final CsvMaintenanceStatusService _csvStatusService = CsvMaintenanceStatusService();
+  final CsvMaintenanceStatusService _csvStatusService =
+      CsvMaintenanceStatusService();
 
   @override
   void initState() {
@@ -81,17 +86,37 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
       vsync: this,
       duration: const Duration(milliseconds: 650),
     );
+    widget.repository.addListener(_handleRepositoryChanged);
     _loadCsvStatuses();
   }
 
   @override
+  void didUpdateWidget(covariant PlantMapView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.repository != widget.repository) {
+      oldWidget.repository.removeListener(_handleRepositoryChanged);
+      widget.repository.addListener(_handleRepositoryChanged);
+      _handleRepositoryChanged();
+    }
+  }
+
+  @override
   void dispose() {
+    widget.repository.removeListener(_handleRepositoryChanged);
     _pinPulseStopTimer?.cancel();
     _pinPulseController.dispose();
     _mapTransformController.dispose();
     _machineSearchController.dispose();
     _machineSearchFocusNode.dispose();
     super.dispose();
+  }
+
+  void _handleRepositoryChanged() {
+    if (!mounted) {
+      return;
+    }
+    setState(() {});
+    unawaited(_loadCsvStatuses());
   }
 
   bool _hasAssignedCoordinates(MachineLocation location) {
@@ -111,7 +136,8 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
   Map<String, Map<String, MachineLocation>> _buildLocationIndex() {
     final bySite = <String, Map<String, MachineLocation>>{};
     for (final location in allMachineLocations) {
-      final siteMap = bySite.putIfAbsent(location.site, () => <String, MachineLocation>{});
+      final siteMap =
+          bySite.putIfAbsent(location.site, () => <String, MachineLocation>{});
       siteMap[_normalizeMachineId(location.id)] = location;
     }
     return bySite;
@@ -174,7 +200,8 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
   void _setSelectedSiteIndex(int newIndex) {
     _selectedSiteIndex = newIndex;
     final siteMachines = _machinesForSite(_sitePlans[newIndex].siteName);
-    if (_selectedEditMachineId != null && !siteMachines.any((m) => m.id == _selectedEditMachineId)) {
+    if (_selectedEditMachineId != null &&
+        !siteMachines.any((m) => m.id == _selectedEditMachineId)) {
       _selectedEditMachineId = null;
     }
   }
@@ -250,10 +277,12 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
       project: machine.name,
     );
 
-    final fallbackOverride = _draftLocationOverrides[_normalizeMachineId(machine.id)];
+    final fallbackOverride =
+        _draftLocationOverrides[_normalizeMachineId(machine.id)];
     if (fallbackOverride != null) {
       return _ResolvedMachineLocation(
-        location: _withCoords(fallback, fallbackOverride.dx, fallbackOverride.dy),
+        location:
+            _withCoords(fallback, fallbackOverride.dx, fallbackOverride.dy),
         sourceId: machine.id,
         hasPersistedCoordinates: false,
       );
@@ -281,8 +310,10 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
 
       final override = _draftLocationOverrides[_normalizeMachineId(match.id)];
       final hasPersistedCoordinates = _hasAssignedCoordinates(match);
-      final dx = override?.dx ?? (hasPersistedCoordinates ? match.dx : machine.mapX);
-      final dy = override?.dy ?? (hasPersistedCoordinates ? match.dy : machine.mapY);
+      final dx =
+          override?.dx ?? (hasPersistedCoordinates ? match.dx : machine.mapX);
+      final dy =
+          override?.dy ?? (hasPersistedCoordinates ? match.dy : machine.mapY);
 
       return _MachineJumpTarget(
         machine: machine,
@@ -310,8 +341,8 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
     final hits = <_MachineSearchHit>[];
 
     for (final machine in widget.repository.machines) {
-      final machineId = machine.id;
-      if (!_normalizeMachineId(machineId).contains(normalizedQuery)) {
+      final matchedNumber = _matchedMachineNumber(machine, normalizedQuery);
+      if (matchedNumber == null) {
         continue;
       }
 
@@ -319,7 +350,7 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
       hits.add(
         _MachineSearchHit(
           machine: machine,
-          matchedMachineNumber: machineId,
+          matchedMachineNumber: matchedNumber,
           target: target,
         ),
       );
@@ -327,6 +358,23 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
 
     hits.sort((a, b) => a.machine.id.compareTo(b.machine.id));
     return hits.take(14);
+  }
+
+  String? _matchedMachineNumber(Machine machine, String normalizedQuery) {
+    final candidates = <String>{machine.id, ...machine.drsNumbers};
+    for (final candidate in candidates) {
+      final normalizedCandidate = _normalizeMachineId(candidate);
+      if (normalizedCandidate.startsWith(normalizedQuery)) {
+        return candidate;
+      }
+    }
+    for (final candidate in candidates) {
+      final normalizedCandidate = _normalizeMachineId(candidate);
+      if (normalizedCandidate.contains(normalizedQuery)) {
+        return candidate;
+      }
+    }
+    return null;
   }
 
   void _focusMapOnTarget(_MachineJumpTarget target) {
@@ -374,7 +422,7 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
   }
 
   void _selectMachineFromSearch(_MachineSearchHit hit) {
-    _machineSearchController.text = hit.machine.id;
+    _machineSearchController.text = hit.matchedMachineNumber;
     _machineSearchFocusNode.unfocus();
 
     final targetSiteIndex = _siteIndexForName(hit.target.siteName);
@@ -398,10 +446,12 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
       return;
     }
 
-    final selectedMachine = machines.where((m) => m.id == _selectedEditMachineId).firstOrNull;
+    final selectedMachine =
+        machines.where((m) => m.id == _selectedEditMachineId).firstOrNull;
     if (selectedMachine == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selectionnez une machine a positionner.')),
+        const SnackBar(
+            content: Text('Selectionnez une machine a positionner.')),
       );
       return;
     }
@@ -412,7 +462,9 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
     final resolved = _resolveLocationForMachine(selectedMachine);
     final sourceId = resolved.sourceId;
     final sourceKey = _normalizeMachineId(sourceId);
-    final project = resolved.location.project.isEmpty ? selectedMachine.name : resolved.location.project;
+    final project = resolved.location.project.isEmpty
+        ? selectedMachine.name
+        : resolved.location.project;
 
     setState(() {
       _draftLocationOverrides[sourceKey] = Offset(dx, dy);
@@ -467,7 +519,9 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                         if (!context.mounted) return;
                         Navigator.of(context).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Snippet copie dans le presse-papiers.')),
+                          const SnackBar(
+                              content: Text(
+                                  'Snippet copie dans le presse-papiers.')),
                         );
                       },
                       icon: const Icon(Icons.copy_all_outlined),
@@ -489,7 +543,8 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                         });
                         Navigator.of(context).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Coordonnee enregistree.')),
+                          const SnackBar(
+                              content: Text('Coordonnee enregistree.')),
                         );
                       },
                       icon: const Icon(Icons.check),
@@ -545,7 +600,9 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                   children: <Widget>[
                     Icon(Icons.circle, size: 12, color: _markerColor(machine)),
                     const SizedBox(width: 8),
-                    Expanded(child: Text('Etat actuel: ${_statusDescription(machine)}')),
+                    Expanded(
+                        child: Text(
+                            'Etat actuel: ${_statusDescription(machine)}')),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -575,7 +632,8 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
 
     final pendingJumpTarget = _pendingJumpTarget;
     if (pendingJumpTarget != null &&
-        pendingJumpTarget.siteName.toLowerCase() == _selectedSiteName.toLowerCase() &&
+        pendingJumpTarget.siteName.toLowerCase() ==
+            _selectedSiteName.toLowerCase() &&
         _mapViewportSize != null) {
       _pendingJumpTarget = null;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -604,9 +662,10 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                 optionsBuilder: (textEditingValue) {
                   return _suggestMachines(textEditingValue.text);
                 },
-                displayStringForOption: (option) => option.machine.id,
+                displayStringForOption: (option) => option.matchedMachineNumber,
                 onSelected: _selectMachineFromSearch,
-                fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                fieldViewBuilder:
+                    (context, controller, focusNode, onFieldSubmitted) {
                   return TextField(
                     controller: controller,
                     focusNode: focusNode,
@@ -624,7 +683,8 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                       elevation: 4,
                       borderRadius: BorderRadius.circular(12),
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 280, minWidth: 320),
+                        constraints:
+                            const BoxConstraints(maxHeight: 280, minWidth: 320),
                         child: ListView.builder(
                           shrinkWrap: true,
                           padding: EdgeInsets.zero,
@@ -633,7 +693,7 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                             final option = options.elementAt(index);
                             return ListTile(
                               leading: const Icon(Icons.location_pin),
-                              title: Text(option.machine.id),
+                              title: Text(option.matchedMachineNumber),
                               subtitle: Text(
                                 '${option.target.siteName} | ${option.machine.name}',
                               ),
@@ -725,14 +785,17 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                 });
               },
               title: const Text('Mode edition pin'),
-              subtitle: const Text('Appui long sur la carte pour capturer dx/dy.'),
+              subtitle:
+                  const Text('Appui long sur la carte pour capturer dx/dy.'),
             ),
           ),
         if (_pinEditMode)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: DropdownButtonFormField<String>(
-              value: siteMachines.any((m) => m.id == _selectedEditMachineId) ? _selectedEditMachineId : null,
+              value: siteMachines.any((m) => m.id == _selectedEditMachineId)
+                  ? _selectedEditMachineId
+                  : null,
               decoration: const InputDecoration(
                 labelText: 'Machine a positionner',
                 prefixIcon: Icon(Icons.edit_location_alt_outlined),
@@ -745,14 +808,15 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                     ),
                   )
                   .toList(),
-              onChanged: (value) => setState(() => _selectedEditMachineId = value),
+              onChanged: (value) =>
+                  setState(() => _selectedEditMachineId = value),
             ),
           ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
           child: Wrap(
             spacing: 8,
-            children: const <Widget>[
+            children: <Widget>[
               _LegendDot(color: Colors.green, label: 'V (Realise)'),
               _LegendDot(color: Colors.red, label: 'N.V / retard'),
               _LegendDot(color: Colors.orange, label: 'Anomalie/corrective'),
@@ -802,14 +866,18 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                             ),
                             ...siteMachines.map(
                               (machine) {
-                                final resolved = _resolveLocationForMachine(machine);
+                                final resolved =
+                                    _resolveLocationForMachine(machine);
                                 final location = resolved.location;
-                                final isEditingMachine = _pinEditMode && machine.id == _selectedEditMachineId;
-                                final isHighlightedMachine = machine.id == _highlightedMachineId;
-                                final showLabel = isEditingMachine || isHighlightedMachine;
+                                final isEditingMachine = _pinEditMode &&
+                                    machine.id == _selectedEditMachineId;
+                                final isHighlightedMachine =
+                                    machine.id == _highlightedMachineId;
+                                final showLabel =
+                                    isEditingMachine || isHighlightedMachine;
                                 return Positioned(
-                                  left: _xToPx(location.dx, width) - 10,
-                                  top: _yToPx(location.dy, height) - 10,
+                                  left: _xToPx(location.dx, width) - 14,
+                                  top: _yToPx(location.dy, height) - 28,
                                   child: GestureDetector(
                                     onTap: () {
                                       if (_pinEditMode) {
@@ -820,22 +888,42 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                                       _showMachineSheet(machine);
                                     },
                                     onPanUpdate: (details) {
-                                      if (!(_pinEditMode && machine.id == _selectedEditMachineId)) return;
-                                      final box = _mapKey.currentContext?.findRenderObject() as RenderBox?;
-                                      if (box == null) return;
-                                      final local = box.globalToLocal(details.globalPosition);
-                                      final dx = (local.dx / width).clamp(0.0, 1.0);
-                                      final dy = (local.dy / height).clamp(0.0, 1.0);
-                                      final sourceKey = _normalizeMachineId(resolved.sourceId);
+                                      if (!(_pinEditMode &&
+                                          machine.id ==
+                                              _selectedEditMachineId)) {
+                                        return;
+                                      }
+                                      final box = _mapKey.currentContext
+                                          ?.findRenderObject() as RenderBox?;
+                                      if (box == null) {
+                                        return;
+                                      }
+                                      final local = box.globalToLocal(
+                                          details.globalPosition);
+                                      final dx =
+                                          (local.dx / width).clamp(0.0, 1.0);
+                                      final dy =
+                                          (local.dy / height).clamp(0.0, 1.0);
+                                      final sourceKey = _normalizeMachineId(
+                                          resolved.sourceId);
                                       setState(() {
-                                        _draftLocationOverrides[sourceKey] = Offset(dx, dy);
+                                        _draftLocationOverrides[sourceKey] =
+                                            Offset(dx, dy);
                                       });
                                     },
                                     onPanEnd: (_) {
-                                      if (!(_pinEditMode && machine.id == _selectedEditMachineId)) return;
-                                      final sourceKey = _normalizeMachineId(resolved.sourceId);
-                                      final ofs = _draftLocationOverrides[sourceKey];
-                                      if (ofs == null) return;
+                                      if (!(_pinEditMode &&
+                                          machine.id ==
+                                              _selectedEditMachineId)) {
+                                        return;
+                                      }
+                                      final sourceKey = _normalizeMachineId(
+                                          resolved.sourceId);
+                                      final ofs =
+                                          _draftLocationOverrides[sourceKey];
+                                      if (ofs == null) {
+                                        return;
+                                      }
                                       final snippet =
                                           "MachineLocation(id: '${resolved.sourceId}', dx: ${ofs.dx.toStringAsFixed(4)}, dy: ${ofs.dy.toStringAsFixed(4)}, site: '$_selectedSiteName', project: '${resolved.location.project}'),";
                                       _showConfirmOverride(
@@ -849,34 +937,46 @@ class _PlantMapViewState extends State<PlantMapView> with SingleTickerProviderSt
                                     child: AnimatedBuilder(
                                       animation: _pinPulseController,
                                       builder: (context, child) {
-                                        final pulse = isHighlightedMachine ? _pinPulseController.value : 0.0;
-                                        final dotBaseSize = isEditingMachine ? 14.0 : 10.0;
-                                        final dotSize = dotBaseSize + (isHighlightedMachine ? (pulse * 8) : 0);
-                                        final borderWidth = isHighlightedMachine ? (1.5 + pulse) : 1.0;
+                                        final pulse = isHighlightedMachine
+                                            ? _pinPulseController.value
+                                            : 0.0;
+                                        final pinBaseSize =
+                                            isEditingMachine ? 34.0 : 28.0;
+                                        final pinSize = pinBaseSize +
+                                            (isHighlightedMachine
+                                                ? (pulse * 8)
+                                                : 0);
+                                        final borderWidth = isHighlightedMachine
+                                            ? (1.5 + pulse)
+                                            : 1.0;
 
                                         return Column(
                                           children: <Widget>[
-                                            Container(
-                                              width: dotSize,
-                                              height: dotSize,
-                                              decoration: BoxDecoration(
-                                                color: _markerColor(machine),
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: isHighlightedMachine
-                                                      ? Colors.yellowAccent
-                                                      : Colors.white,
-                                                  width: borderWidth,
+                                            Icon(
+                                              Icons.location_on,
+                                              size: pinSize,
+                                              color: _markerColor(machine),
+                                              shadows: const <Shadow>[
+                                                Shadow(
+                                                  color: Colors.black54,
+                                                  blurRadius: 5,
+                                                  offset: Offset(0, 2),
                                                 ),
-                                              ),
+                                              ],
                                             ),
                                             if (showLabel)
                                               Container(
-                                                margin: const EdgeInsets.only(top: 4),
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                margin: const EdgeInsets.only(
+                                                    top: 4),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.black.withValues(alpha: 0.65),
-                                                  borderRadius: BorderRadius.circular(8),
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.65),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
                                                   border: Border.all(
                                                     color: isHighlightedMachine
                                                         ? Colors.yellowAccent

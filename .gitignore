@@ -1,0 +1,87 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub/
+build/
+*.lock
+packages/
+pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Android
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/gradle/wrapper/gradle-wrapper.jar
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+*.iml
+.gradle/
+local.properties
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/AppFrameworkInfo.plist
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/flutter_export_environment.sh
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Runner.xcworkspace/xcshareddata/
+ios/Podfile.lock
+*.xcworkspace
+
+# macOS
+macos/Pods/
+macos/.symlinks/
+macos/Flutter/Generated.xcconfig
+macos/Flutter/ephemeral/
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Runner/GeneratedPluginRegistrant.*
+
+# Linux
+linux/flutter/ephemeral/
+linux/flutter/generated_*
+
+# Windows
+windows/flutter/ephemeral/
+windows/flutter/generated_*
+
+# Web
+web/icons/
+
+# Firebase
+firebase.json
+android/app/google-services.json
+lib/firebase_options.dart
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Project specific
+icon/
+build/
+calendrier_csv/
+calendrier/
+carte/
+docs/
+tool/
+
+# Test
+test/
+
+# Assets source files (original Excel files)
+assets/calendars/
+
+# Environment
+.env
+.env.local

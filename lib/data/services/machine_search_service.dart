@@ -13,7 +13,8 @@ class MachineSearchHit {
   final String project;
   final String machineType;
 
-  String get searchableText => '$machineNumber $project $machineType ${machine.site}';
+  String get searchableText =>
+      '$machineNumber $project $machineType ${machine.site}';
 }
 
 class MachineSearchService {
@@ -55,10 +56,7 @@ class MachineSearchService {
       return a.hit.machineNumber.compareTo(b.hit.machineNumber);
     });
 
-    return scored
-        .map((item) => item.hit)
-        .take(limit)
-        .toList(growable: false);
+    return scored.map((item) => item.hit).take(limit).toList(growable: false);
   }
 
   MachineSearchHit? findExact(String query) {
@@ -66,7 +64,7 @@ class MachineSearchService {
     if (normalizedQuery.isEmpty) {
       return null;
     }
-    return _index[normalizedQuery];
+    return _index[normalizedQuery] ?? _index[_normalizeTsAlias(query)];
   }
 
   static List<MachineSearchHit> _buildHits(List<Machine> machines) {
@@ -75,10 +73,15 @@ class MachineSearchService {
 
     for (final machine in machines) {
       final project = _resolveProject(machine);
-      final uniqueNumbers = machine.drsNumbers.toSet();
+      final uniqueNumbers = <String>{
+        machine.id,
+        ...machine.drsNumbers,
+        for (final number in machine.drsNumbers) _withTsPrefix(number),
+      };
       for (final number in uniqueNumbers) {
         final normalizedNumber = _normalize(number);
-        if (normalizedNumber.isEmpty || !seen.add('${machine.id}::$normalizedNumber')) {
+        if (normalizedNumber.isEmpty ||
+            !seen.add('${machine.id}::$normalizedNumber')) {
           continue;
         }
 
@@ -116,14 +119,14 @@ class MachineSearchService {
     if (number == query) {
       return 120;
     }
-    if (number.endsWith(query)) {
-      return 105;
-    }
     if (number.startsWith(query)) {
-      return 95;
+      return 110;
+    }
+    if (number.endsWith(query)) {
+      return 90;
     }
     if (number.contains(query)) {
-      return 80;
+      return 70;
     }
     if (project.contains(query)) {
       return 55;
@@ -135,7 +138,8 @@ class MachineSearchService {
   }
 
   static String _resolveProject(Machine machine) {
-    if (machine.project.trim().isNotEmpty && machine.project.toUpperCase() != 'SEBN-MA') {
+    if (machine.project.trim().isNotEmpty &&
+        machine.project.toUpperCase() != 'SEBN-MA') {
       return machine.project;
     }
     return machine.name;
@@ -143,5 +147,25 @@ class MachineSearchService {
 
   static String _normalize(String value) {
     return value.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+  }
+
+  static String _normalizeTsAlias(String value) {
+    final normalized = _normalize(value);
+    if (normalized.startsWith('TSTS')) {
+      return normalized.substring(2);
+    }
+    if (normalized.startsWith('TS') && !normalized.startsWith('TSTS')) {
+      return 'TS$normalized';
+    }
+    return normalized;
+  }
+
+  static String _withTsPrefix(String value) {
+    final trimmed = value.trim();
+    final normalized = _normalize(trimmed);
+    if (normalized.startsWith('TS') && !normalized.startsWith('TSTS')) {
+      return 'TS $trimmed';
+    }
+    return trimmed;
   }
 }

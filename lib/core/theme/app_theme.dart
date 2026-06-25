@@ -31,7 +31,7 @@ class AppTheme {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      margin: EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
     ),
     iconTheme: const IconThemeData(color: Colors.black87),
     textTheme: const TextTheme(

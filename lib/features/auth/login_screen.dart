@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../data/models/app_user.dart';
 import '../../data/repositories/maintenance_repository.dart';
 
@@ -53,21 +52,6 @@ class _LoginScreenState extends State<LoginScreen> {
       role: _role,
     );
 
-    if (found == null) {
-      final isAdmin = matricule == AppConstants.adminMatricule &&
-          password == AppConstants.adminPassword &&
-          _role == UserRole.admin;
-      if (isAdmin) {
-        found = const AppUser(
-          id: 'admin-1',
-          fullName: 'Admin SEBN',
-          matricule: AppConstants.adminMatricule,
-          password: AppConstants.adminPassword,
-          role: UserRole.admin,
-        );
-      }
-    }
-
     if (!mounted) {
       return;
     }
@@ -106,7 +90,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: <Widget>[
                         const Text(
                           'M-link SEBN',
-                          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 28, fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
@@ -180,17 +165,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               ? const SizedBox(
                                   width: 16,
                                   height: 16,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Icon(Icons.login),
                           label: const Text('Se connecter'),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Admin demo: 19879 / ******',
-                          style: TextStyle(fontSize: 12),
-                          textAlign: TextAlign.center,
-                        ),
                       ],
                     ),
                   ),

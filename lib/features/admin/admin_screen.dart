@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../data/models/app_user.dart';
 import '../../data/repositories/maintenance_repository.dart';
@@ -46,20 +45,21 @@ class _AdminScreenState extends State<AdminScreen> {
     });
 
     try {
-      final callable = FirebaseFunctions.instance.httpsCallable('createUser');
-      await callable.call(<String, dynamic>{
-        'fullName': _nameCtrl.text.trim(),
-        'matricule': _matriculeCtrl.text.trim(),
-        'password': password,
-        'role': _role.name,
-      });
-    } on FirebaseFunctionsException catch (error) {
+      final user = AppUser(
+        id: 'tech-${DateTime.now().millisecondsSinceEpoch}',
+        fullName: _nameCtrl.text.trim(),
+        matricule: _matriculeCtrl.text.trim(),
+        password: password,
+        role: _role,
+      );
+      await widget.repository.addUser(user);
+    } catch (error) {
       if (!mounted) {
         return;
       }
       setState(() {
         _saving = false;
-        _error = error.message ?? 'Erreur lors de la creation.';
+        _error = 'Erreur lors de la creation: $error';
       });
       return;
     }

@@ -21,7 +21,12 @@ import 'features/machines/machine_detail_screen.dart';
 import 'features/profile/profile_screen.dart';
 
 class MLinkApp extends StatefulWidget {
-  const MLinkApp({super.key});
+  const MLinkApp({
+    super.key,
+    MaintenanceRepository? repository,
+  }) : _repository = repository;
+
+  final MaintenanceRepository? _repository;
 
   @override
   State<MLinkApp> createState() => _MLinkAppState();
@@ -39,7 +44,7 @@ class _MLinkAppState extends State<MLinkApp> {
   @override
   void initState() {
     super.initState();
-    _repository = HybridMaintenanceRepository();
+    _repository = widget._repository ?? HybridMaintenanceRepository();
     _initFuture = _repository.initialize();
   }
 
@@ -71,7 +76,8 @@ class _MLinkAppState extends State<MLinkApp> {
     });
   }
 
-  Future<bool> _onPasswordChanged(String currentPassword, String newPassword) async {
+  Future<bool> _onPasswordChanged(
+      String currentPassword, String newPassword) async {
     final user = _currentUser;
     if (user == null) {
       return false;
@@ -160,7 +166,8 @@ class _HomeShell extends StatelessWidget {
   final ValueChanged<bool> onThemeChanged;
   final Uint8List? profileImageBytes;
   final ValueChanged<Uint8List?> onProfileImageChanged;
-  final Future<bool> Function(String currentPassword, String newPassword) onPasswordChanged;
+  final Future<bool> Function(String currentPassword, String newPassword)
+      onPasswordChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +243,8 @@ class _HomeShell extends StatelessWidget {
       Navigator.of(context).pop();
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => HistoryScreen(interventions: repository.interventions),
+          builder: (_) =>
+              HistoryScreen(interventions: repository.interventions),
         ),
       );
     }

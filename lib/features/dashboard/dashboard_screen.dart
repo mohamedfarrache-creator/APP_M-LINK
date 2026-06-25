@@ -35,12 +35,13 @@ class DashboardScreen extends StatelessWidget {
       KpiCard(
         title: 'Machines en retard',
         value: '${delayedMachines.length}',
-        accent: Color(0xFFE05757),
+        accent: const Color(0xFFE05757),
         icon: Icons.warning_amber_rounded,
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) => DelayedMachinesListScreen(machines: delayedMachines),
+              builder: (_) =>
+                  DelayedMachinesListScreen(machines: delayedMachines),
             ),
           );
         },
@@ -48,7 +49,7 @@ class DashboardScreen extends StatelessWidget {
       KpiCard(
         title: 'Anomalies ouvertes',
         value: '${openAnomalies.length}',
-        accent: Color(0xFFFFA239),
+        accent: const Color(0xFFFFA239),
         icon: Icons.handyman_outlined,
         onTap: () {
           Navigator.of(context).push(
@@ -61,7 +62,7 @@ class DashboardScreen extends StatelessWidget {
       KpiCard(
         title: 'Interventions (Semaine)',
         value: '$interventionsThisWeek',
-        accent: Color(0xFF00B4D8),
+        accent: const Color(0xFF00B4D8),
         icon: Icons.calendar_month_outlined,
       ),
       const KpiCard(
@@ -236,7 +237,8 @@ class _KpiStandardContent extends StatelessWidget {
         const Spacer(),
         Text(
           title,
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
@@ -272,7 +274,8 @@ class _KpiProgressContent extends StatelessWidget {
       children: <Widget>[
         Text(
           title,
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
         ),
         const Spacer(),
         Center(

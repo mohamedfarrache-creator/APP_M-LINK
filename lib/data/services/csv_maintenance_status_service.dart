@@ -56,7 +56,9 @@ class CsvMaintenanceStatusService {
     final manifestText = await rootBundle.loadString('AssetManifest.json');
     final manifest = jsonDecode(manifestText) as Map<String, dynamic>;
     final csvAssets = manifest.keys
-        .where((path) => path.startsWith('calendrier_csv/') && path.toLowerCase().endsWith('.csv'))
+        .where((path) =>
+            path.startsWith('calendrier_csv/') &&
+            path.toLowerCase().endsWith('.csv'))
         .toList()
       ..sort();
 
@@ -128,7 +130,8 @@ class CsvMaintenanceStatusService {
         }
       });
 
-      schedules[_normalize(machineNumber)] = _CsvMachineSchedule(weekValues: weekValues);
+      schedules[_normalize(machineNumber)] =
+          _CsvMachineSchedule(weekValues: weekValues);
     }
 
     return schedules;
@@ -267,6 +270,11 @@ class CsvMaintenanceStatusService {
         .replaceAll('è', 'e')
         .replaceAll('ê', 'e')
         .replaceAll('à', 'a')
+        .replaceAll('Ã©', 'e')
+        .replaceAll('Ã¨', 'e')
+        .replaceAll('Ãª', 'e')
+        .replaceAll('Ã ', 'a')
+        .replaceAll('Â°', '')
         .replaceAll('°', '')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();

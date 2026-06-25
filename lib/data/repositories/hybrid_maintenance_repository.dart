@@ -10,6 +10,7 @@ import '../models/app_user.dart';
 import '../models/intervention.dart';
 import '../models/machine.dart';
 import '../models/project_calendar.dart';
+import 'local_machine_seed_merge.dart';
 import 'maintenance_repository.dart';
 
 class HybridMaintenanceRepository extends MaintenanceRepository {
@@ -286,12 +287,11 @@ class HybridMaintenanceRepository extends MaintenanceRepository {
     final loadedMachines = await _machineStore.fetchAll();
     final loadedCalendars = await _calendarStore.fetchAll();
 
-    if (loadedMachines.isEmpty) {
-      await _machineStore.saveAll(seedMachines);
-      _machines = List<Machine>.from(seedMachines);
-    } else {
-      _machines = loadedMachines;
-    }
+    _machines = mergeSeedMachinesWithLocal(
+      seedMachines: seedMachines,
+      localMachines: loadedMachines,
+    );
+    await _machineStore.saveAll(_machines);
 
     if (loadedCalendars.isEmpty) {
       await _calendarStore.saveAll(seedProjectCalendars);

@@ -39,7 +39,8 @@ class PreventiveCalendarScreen extends StatefulWidget {
   const PreventiveCalendarScreen({super.key});
 
   @override
-  State<PreventiveCalendarScreen> createState() => _PreventiveCalendarScreenState();
+  State<PreventiveCalendarScreen> createState() =>
+      _PreventiveCalendarScreenState();
 }
 
 class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
@@ -100,11 +101,10 @@ class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
   Future<Map<String, String>> _discoverProjectAssets() async {
     final manifestText = await rootBundle.loadString('AssetManifest.json');
     final manifest = jsonDecode(manifestText) as Map<String, dynamic>;
-    final entries = manifest.keys
-        .where((path) {
-          return path.startsWith('calendrier_csv/') && path.toLowerCase().endsWith('.csv');
-        })
-        .toList()
+    final entries = manifest.keys.where((path) {
+      return path.startsWith('calendrier_csv/') &&
+          path.toLowerCase().endsWith('.csv');
+    }).toList()
       ..sort();
 
     final map = <String, String>{};
@@ -116,7 +116,6 @@ class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
     return map;
   }
 
-  // Required by request: dynamically load CSV data from selected project.
   Future<void> loadProjectData(String projectName) async {
     setState(() {
       _loading = true;
@@ -145,40 +144,26 @@ class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
     }
   }
 
-  // Robust filtering for irregular CSV exports with empty/shifted rows.
   List<Machine> _filterMachines() {
     if (currentCsvData.isEmpty) {
       return <Machine>[];
     }
 
-    final limit = currentCsvData.length < 20 ? currentCsvData.length : 20;
-    var headerRowIndex = -1;
-
-    // 1) Find header row containing the machine column label.
-    for (var i = 0; i < limit; i++) {
-      final row = _rowToStrings(currentCsvData[i]);
-      if (row.any(_looksLikeMachineHeaderCell)) {
-        headerRowIndex = i;
-        break;
-      }
-    }
-
+    final headerRowIndex = _findHeaderRowIndex(currentCsvData);
     if (headerRowIndex < 0) {
       return <Machine>[];
     }
 
     final header = _rowToStrings(currentCsvData[headerRowIndex]);
+    final nameIdx = _indexOfMachineHeader(header);
+    final weekColumnMap = _buildWeekColumnMap(header);
+    final targetIdx = weekColumnMap[selectedWeek];
+    if (nameIdx < 0 || targetIdx == null) {
+      return <Machine>[];
+    }
 
-    // 2) Map indexes from this exact header row.
-    final nameIdx = _indexOfHeaderExact(
-      header,
-      const <String>['Numéro de machine', 'Numero de machine', 'NumÃ©ro de machine'],
-    );
-    var typeIdx = _indexOfHeaderExact(header, const <String>['TYPE']);
-    var etatIdx = _indexOfHeaderExact(header, const <String>['ETAT']);
-    final firstWeekIdx = _indexOfHeaderExact(header, const <String>['1']);
-
-    // Some Excel exports place TYPE/ETAT on a nearby decorative row.
+    var typeIdx = _indexOfHeader(header, 'TYPE');
+    var etatIdx = _indexOfHeader(header, 'ETAT');
     if (typeIdx < 0 || etatIdx < 0) {
       final nearby = _findTypeEtatInNearbyRows(headerRowIndex);
       if (typeIdx < 0) {
@@ -189,48 +174,45 @@ class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
       }
     }
 
-    if (nameIdx < 0 || firstWeekIdx < 0) {
-      return <Machine>[];
-    }
-
     final output = <Machine>[];
-
-    // 3) Parse data rows directly under header.
     for (var i = headerRowIndex + 1; i < currentCsvData.length; i++) {
       final row = currentCsvData[i];
-      if (row.isEmpty) {
-        continue;
-      }
-
-      // 4) Compute target cell index for selected week.
-      final targetIdx = firstWeekIdx + (selectedWeek - 1);
-
-      // 5) Protect against short rows and only include non-empty tasks.
       if (targetIdx >= row.length) {
         continue;
       }
 
       final machineName = _cell(row, nameIdx).trim();
       final weekValue = _cell(row, targetIdx).trim();
-      if (machineName.isEmpty || weekValue.isEmpty) {
+      if (machineName.isEmpty ||
+          weekValue.isEmpty ||
+          _looksLikeMachineHeaderCell(machineName)) {
         continue;
       }
-
-      final typeValue = typeIdx >= 0 ? _cell(row, typeIdx).trim() : '-';
-      final etatValue = etatIdx >= 0 ? _cell(row, etatIdx).trim() : '';
 
       output.add(
         Machine(
           projectName: _selectedProject ?? '-',
           name: machineName,
-          type: typeValue,
-          etat: etatValue,
+          type: typeIdx >= 0 ? _cell(row, typeIdx).trim() : '-',
+          etat: etatIdx >= 0 ? _cell(row, etatIdx).trim() : '',
           weeklyTasks: <int, String>{selectedWeek: weekValue},
         ),
       );
     }
 
     return output;
+  }
+
+  int _findHeaderRowIndex(List<List<dynamic>> rows) {
+    final limit = rows.length < 30 ? rows.length : 30;
+    for (var i = 0; i < limit; i++) {
+      final row = _rowToStrings(rows[i]);
+      if (_indexOfMachineHeader(row) >= 0 &&
+          _buildWeekColumnMap(row).isNotEmpty) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   (int, int) _findTypeEtatInNearbyRows(int headerRowIndex) {
@@ -241,51 +223,60 @@ class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
 
     for (var i = from; i <= to; i++) {
       final row = _rowToStrings(currentCsvData[i]);
-      final t = _indexOfHeaderExact(row, const <String>['TYPE']);
-      final e = _indexOfHeaderExact(row, const <String>['ETAT']);
-      if (t >= 0 || e >= 0) {
-        return (t, e);
+      final typeIdx = _indexOfHeader(row, 'TYPE');
+      final etatIdx = _indexOfHeader(row, 'ETAT');
+      if (typeIdx >= 0 || etatIdx >= 0) {
+        return (typeIdx, etatIdx);
       }
     }
     return (-1, -1);
   }
 
-  int _indexOfHeaderExact(List<String> header, List<String> acceptedValues) {
-    // Exact pass.
+  int _indexOfMachineHeader(List<String> header) {
     for (var i = 0; i < header.length; i++) {
-      final value = header[i].trim();
-      for (final accepted in acceptedValues) {
-        if (value == accepted) {
-          return i;
-        }
-      }
-    }
-
-    // Normalized fallback to handle spacing/encoding/accents across files.
-    for (var i = 0; i < header.length; i++) {
-      final value = _normalize(header[i]);
-      for (final accepted in acceptedValues) {
-        if (value == _normalize(accepted)) {
-          return i;
-        }
-      }
-
-      // Week marker fallback for column '1'.
-      if (acceptedValues.length == 1 && acceptedValues.first == '1') {
-        final numeric = int.tryParse(value);
-        if (numeric == 1) {
-          return i;
-        }
+      if (_looksLikeMachineHeaderCell(header[i])) {
+        return i;
       }
     }
     return -1;
   }
 
+  int _indexOfHeader(List<String> header, String label) {
+    final normalizedLabel = _normalizeText(label);
+    for (var i = 0; i < header.length; i++) {
+      if (_normalizeText(header[i]) == normalizedLabel) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  Map<int, int> _buildWeekColumnMap(List<String> header) {
+    final output = <int, int>{};
+    for (var i = 0; i < header.length; i++) {
+      final week = _parseWeekNumber(header[i]);
+      if (week != null && week >= 1 && week <= 53) {
+        output[week] = i;
+      }
+    }
+    return output;
+  }
+
+  int? _parseWeekNumber(String value) {
+    final cleaned = value.toUpperCase().replaceAll('KW', '').trim();
+    final intValue = int.tryParse(cleaned);
+    if (intValue != null) {
+      return intValue;
+    }
+    final doubleValue = double.tryParse(cleaned.replaceAll(',', '.'));
+    return doubleValue?.toInt();
+  }
+
   bool _looksLikeMachineHeaderCell(String cell) {
-    final normalized = _normalize(cell);
+    final normalized = _normalizeText(cell);
     return normalized == 'numero de machine' ||
-        normalized == 'n° machine' ||
-        normalized == 'n machine';
+        normalized == 'n machine' ||
+        normalized == 'n de machine';
   }
 
   String _cell(List<dynamic> row, int index) {
@@ -293,17 +284,6 @@ class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
       return '';
     }
     return _csvValueToString(row[index]);
-  }
-
-  String _normalize(String value) {
-    return value
-        .toLowerCase()
-        .replaceAll('é', 'e')
-        .replaceAll('è', 'e')
-        .replaceAll('ê', 'e')
-        .replaceAll('à', 'a')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
   }
 
   List<String> _rowToStrings(List<dynamic> row) {
@@ -319,19 +299,39 @@ class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
   }
 
   String _projectNameFromFilename(String filename) {
-    final base = filename
-        .replaceAll('.csv', '')
-        .replaceAll('Calendrier', '')
+    final withoutExtension =
+        filename.replaceAll(RegExp(r'\.csv$', caseSensitive: false), '');
+    final normalized = _normalizeText(withoutExtension)
         .replaceAll('calendrier', '')
         .replaceAll('preventive', '')
-        .replaceAll('préventive', '')
         .replaceAll('2026', '')
-        .replaceAll('_', ' ')
-        .replaceAll('-', ' ')
+        .replaceAll(RegExp(r'[_-]+'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
 
-    return base.isEmpty ? filename : base.toUpperCase();
+    return normalized.isEmpty ? filename : normalized.toUpperCase();
+  }
+
+  String _normalizeText(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll('é', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ê', 'e')
+        .replaceAll('à', 'a')
+        .replaceAll('Ã©', 'e')
+        .replaceAll('Ã¨', 'e')
+        .replaceAll('Ãª', 'e')
+        .replaceAll('Ã ', 'a')
+        .replaceAll('ÃƒÂ©', 'e')
+        .replaceAll('ÃƒÂ¨', 'e')
+        .replaceAll('ÃƒÂª', 'e')
+        .replaceAll('ÃƒÂ ', 'a')
+        .replaceAll('°', '')
+        .replaceAll('Â°', '')
+        .replaceAll('Ã‚Â°', '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   Color _validationColor(Machine machine) {
@@ -437,15 +437,21 @@ class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
                     )
                   : filtered.isEmpty
                       ? Center(
-                          child: Text('Aucune machine planifiee pour KW $selectedWeek'),
+                          child: Text(
+                            'Aucune machine planifiee pour KW $selectedWeek',
+                          ),
                         )
                       : ListView.builder(
                           itemCount: filtered.length,
                           itemBuilder: (context, index) {
                             final machine = filtered[index];
-                            final task = machine.weeklyTasks[selectedWeek]!.trim();
+                            final task =
+                                machine.weeklyTasks[selectedWeek]!.trim();
                             return Card(
-                              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               child: ListTile(
                                 leading: CircleAvatar(
                                   child: Icon(_typeIcon(machine.type)),

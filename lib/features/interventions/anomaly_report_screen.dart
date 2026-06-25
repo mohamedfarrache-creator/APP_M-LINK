@@ -132,13 +132,15 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
   }
 
   Future<void> _submit() async {
+    _syncSelectedMachineWithInput();
     if (!_formKey.currentState!.validate() || _selectedMachine == null) {
       return;
     }
 
     final machine = _selectedMachine!.machine;
     final description = _descriptionCtrl.text.trim();
-    final enrichedDescription = _photoLabel == null ? description : '$description\nPhoto: $_photoLabel';
+    final enrichedDescription =
+        _photoLabel == null ? description : '$description\nPhoto: $_photoLabel';
 
     final intervention = Intervention(
       id: 'INT-${DateTime.now().millisecondsSinceEpoch}',
@@ -188,6 +190,15 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
     );
   }
 
+  void _syncSelectedMachineWithInput() {
+    final exact = _searchService.findExact(_machineCtrl.text.trim());
+    if (exact != _selectedMachine) {
+      setState(() {
+        _selectedMachine = exact;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -224,7 +235,8 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
                         _selectedMachine = option;
                       });
                     },
-                    fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                    fieldViewBuilder:
+                        (context, controller, focusNode, onFieldSubmitted) {
                       return TextFormField(
                         controller: controller,
                         focusNode: focusNode,
@@ -232,10 +244,13 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
                         decoration: const InputDecoration(
                           labelText: 'Machine',
                           hintText: 'Ex: TS1700... ou 3 derniers chiffres',
-                          prefixIcon: Icon(Icons.precision_manufacturing_outlined),
+                          prefixIcon:
+                              Icon(Icons.precision_manufacturing_outlined),
                         ),
                         validator: (_) {
-                          if (_selectedMachine == null) {
+                          final exact =
+                              _searchService.findExact(controller.text.trim());
+                          if (_selectedMachine == null && exact == null) {
                             return 'Selectionnez une machine valide';
                           }
                           return null;
@@ -249,7 +264,8 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
                           elevation: 4,
                           borderRadius: BorderRadius.circular(14),
                           child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 260, minWidth: 320),
+                            constraints: const BoxConstraints(
+                                maxHeight: 260, minWidth: 320),
                             child: ListView.builder(
                               padding: EdgeInsets.zero,
                               shrinkWrap: true,
@@ -259,7 +275,8 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
                                 return ListTile(
                                   leading: const Icon(Icons.memory_outlined),
                                   title: Text(option.machineNumber),
-                                  subtitle: Text('${option.project} | ${option.machineType}'),
+                                  subtitle: Text(
+                                      '${option.project} | ${option.machineType}'),
                                   onTap: () => onSelected(option),
                                 );
                               },
@@ -279,7 +296,8 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
                   _infoTile(
                     icon: Icons.category_outlined,
                     label: 'Type machine detecte',
-                    value: _selectedMachine?.machineType ?? 'Aucun type detecte',
+                    value:
+                        _selectedMachine?.machineType ?? 'Aucun type detecte',
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
@@ -302,7 +320,8 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
                           ),
                         )
                         .toList(),
-                    onChanged: (value) => setState(() => _problemType = value ?? 'Panne'),
+                    onChanged: (value) =>
+                        setState(() => _problemType = value ?? 'Panne'),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -357,7 +376,9 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
                   OutlinedButton.icon(
                     onPressed: _selectPhoto,
                     icon: const Icon(Icons.add_a_photo_outlined),
-                    label: Text(_photoLabel == null ? 'Ajouter une photo' : 'Photo ajoutee'),
+                    label: Text(_photoLabel == null
+                        ? 'Ajouter une photo'
+                        : 'Photo ajoutee'),
                   ),
                   if (_photoLabel != null) ...<Widget>[
                     const SizedBox(height: 8),
