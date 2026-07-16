@@ -16,6 +16,7 @@ class Intervention {
     required this.description,
     required this.createdAtIso,
     required this.forKw,
+    this.imageUrl,
     this.isRead = false,
     this.status = 'open',
   });
@@ -32,6 +33,7 @@ class Intervention {
   final String description;
   final String createdAtIso;
   final int forKw;
+  final String? imageUrl;
   final bool isRead;
   final String status;
 
@@ -55,6 +57,7 @@ class Intervention {
       description: json['description'] as String,
       createdAtIso: json['createdAtIso'] as String,
       forKw: json['forKw'] as int,
+      imageUrl: json['imageUrl'] as String?,
       isRead: json['isRead'] as bool? ?? false,
       status: json['status'] as String? ?? 'open',
     );
@@ -74,6 +77,7 @@ class Intervention {
       'description': description,
       'createdAtIso': createdAtIso,
       'forKw': forKw,
+      'imageUrl': imageUrl,
       'isRead': isRead,
       'status': status,
     };

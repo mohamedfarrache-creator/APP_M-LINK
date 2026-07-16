@@ -33,7 +33,7 @@ final List<MachineLocation> allMachineLocations = <MachineLocation>[
   const MachineLocation(
       id: '24-0813', dx: 0.0, dy: 0.0, site: 'Plant 1', project: 'Q7-Q9 KSK'),
   const MachineLocation(
-      id: '24-0911', dx: 0.0, dy: 0.0, site: 'Plant 1', project: 'Q7-Q9 KSK'),
+      id: '24-0911', dx: 0.4970, dy: 0.4275, site: 'Plant 1', project: 'Q7-Q9 KSK'),
   const MachineLocation(
       id: '24-0911 holder Q7 AN1',
       dx: 0.0,

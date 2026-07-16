@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/models/app_user.dart';
@@ -33,6 +34,9 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
   String _problemType = 'Panne';
   InterventionPriority _priority = InterventionPriority.high;
   String? _photoLabel;
+  XFile? _selectedPhoto;
+  bool _uploadingPhoto = false;
+  bool _submitting = false;
 
   @override
   void initState() {
@@ -117,6 +121,7 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
     }
 
     setState(() {
+      _selectedPhoto = picked;
       _photoLabel = picked.name;
     });
   }
@@ -133,17 +138,39 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
 
   Future<void> _submit() async {
     _syncSelectedMachineWithInput();
-    if (!_formKey.currentState!.validate() || _selectedMachine == null) {
+    if (_submitting ||
+        !_formKey.currentState!.validate() ||
+        _selectedMachine == null) {
       return;
     }
 
     final machine = _selectedMachine!.machine;
     final description = _descriptionCtrl.text.trim();
-    final enrichedDescription =
-        _photoLabel == null ? description : '$description\nPhoto: $_photoLabel';
+    final interventionId = 'INT-${DateTime.now().millisecondsSinceEpoch}';
+
+    setState(() {
+      _submitting = true;
+    });
+
+    String? imageUrl;
+    try {
+      imageUrl = await _uploadSelectedPhoto(interventionId);
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _submitting = false;
+        _uploadingPhoto = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur upload photo: $e')),
+      );
+      return;
+    }
 
     final intervention = Intervention(
-      id: 'INT-${DateTime.now().millisecondsSinceEpoch}',
+      id: interventionId,
       machineId: machine.id,
       machineName: machine.name,
       createdByUserId: widget.currentUser.id,
@@ -152,12 +179,26 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
       type: _toInterventionType(_problemType),
       priority: _priority,
       title: _problemType,
-      description: enrichedDescription,
+      description: description,
       createdAtIso: DateTime.now().toIso8601String(),
       forKw: machine.nextKw,
+      imageUrl: imageUrl,
     );
 
-    await widget.repository.submitIntervention(intervention);
+    try {
+      await widget.repository.submitIntervention(intervention);
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _submitting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur envoi anomalie: $e')),
+      );
+      return;
+    }
     if (!mounted) {
       return;
     }
@@ -171,9 +212,52 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
       _problemType = 'Panne';
       _priority = InterventionPriority.high;
       _photoLabel = null;
+      _selectedPhoto = null;
+      _submitting = false;
+      _uploadingPhoto = false;
     });
     _machineCtrl.clear();
     _descriptionCtrl.clear();
+  }
+
+  Future<String?> _uploadSelectedPhoto(String interventionId) async {
+    final photo = _selectedPhoto;
+    if (photo == null) {
+      return null;
+    }
+
+    setState(() {
+      _uploadingPhoto = true;
+    });
+
+    final bytes = await photo.readAsBytes();
+    final safeName = photo.name.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    final path = 'anomalies_photos/${interventionId}_$safeName';
+    final ref = FirebaseStorage.instance.ref().child(path);
+    final metadata = SettableMetadata(
+      contentType: photo.mimeType ?? _contentTypeForName(photo.name),
+    );
+
+    await ref.putData(bytes, metadata);
+    final url = await ref.getDownloadURL();
+
+    if (mounted) {
+      setState(() {
+        _uploadingPhoto = false;
+      });
+    }
+    return url;
+  }
+
+  String _contentTypeForName(String name) {
+    final lower = name.toLowerCase();
+    if (lower.endsWith('.png')) {
+      return 'image/png';
+    }
+    if (lower.endsWith('.webp')) {
+      return 'image/webp';
+    }
+    return 'image/jpeg';
   }
 
   Widget _infoTile({
@@ -374,11 +458,19 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    onPressed: _selectPhoto,
-                    icon: const Icon(Icons.add_a_photo_outlined),
+                    onPressed: _submitting ? null : _selectPhoto,
+                    icon: _uploadingPhoto
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.add_a_photo_outlined),
                     label: Text(_photoLabel == null
                         ? 'Ajouter une photo'
-                        : 'Photo ajoutee'),
+                        : _uploadingPhoto
+                            ? 'Envoi de la photo...'
+                            : 'Photo ajoutee'),
                   ),
                   if (_photoLabel != null) ...<Widget>[
                     const SizedBox(height: 8),
@@ -389,9 +481,17 @@ class _AnomalyReportScreenState extends State<AnomalyReportScreen> {
                   ],
                   const SizedBox(height: 16),
                   FilledButton.icon(
-                    onPressed: _selectedMachine == null ? null : _submit,
-                    icon: const Icon(Icons.notification_add_outlined),
-                    label: const Text('Envoyer'),
+                    onPressed: _selectedMachine == null || _submitting
+                        ? null
+                        : _submit,
+                    icon: _submitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.notification_add_outlined),
+                    label: Text(_uploadingPhoto ? 'Envoi photo...' : 'Envoyer'),
                   ),
                 ],
               ),

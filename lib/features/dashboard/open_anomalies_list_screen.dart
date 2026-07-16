@@ -33,28 +33,58 @@ class OpenAnomaliesListScreen extends StatelessWidget {
                     : DateFormat('dd/MM/yyyy HH:mm').format(parsedDate);
 
                 return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: _priorityColor(anomaly.priority).withValues(alpha: 0.16),
-                      child: Icon(
-                        Icons.report_problem_outlined,
-                        color: _priorityColor(anomaly.priority),
-                      ),
-                    ),
-                    title: Text(anomaly.title),
-                    subtitle: Text(
-                      'Date: $dateLabel\nMachine: ${anomaly.machineName}',
-                    ),
-                    isThreeLine: true,
-                    trailing: Chip(
-                      label: Text(_priorityLabel(anomaly.priority)),
-                      backgroundColor: _priorityColor(anomaly.priority).withValues(alpha: 0.18),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        CircleAvatar(
+                          backgroundColor: _priorityColor(anomaly.priority)
+                              .withValues(alpha: 0.16),
+                          child: Icon(
+                            Icons.report_problem_outlined,
+                            color: _priorityColor(anomaly.priority),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                anomaly.title,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 4),
+                              Text('Date: $dateLabel'),
+                              Text('Machine: ${anomaly.machineName}'),
+                              if (_hasImage(anomaly)) ...<Widget>[
+                                const SizedBox(height: 10),
+                                _AnomalyImageThumbnail(
+                                  imageUrl: anomaly.imageUrl!,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Chip(
+                          label: Text(_priorityLabel(anomaly.priority)),
+                          backgroundColor: _priorityColor(anomaly.priority)
+                              .withValues(alpha: 0.18),
+                        ),
+                      ],
                     ),
                   ),
                 );
               },
             ),
     );
+  }
+
+  bool _hasImage(Intervention anomaly) {
+    final imageUrl = anomaly.imageUrl;
+    return imageUrl != null && imageUrl.trim().isNotEmpty;
   }
 
   Color _priorityColor(InterventionPriority priority) {
@@ -81,5 +111,102 @@ class OpenAnomaliesListScreen extends StatelessWidget {
       case InterventionPriority.urgent:
         return 'Urgente';
     }
+  }
+}
+
+class _AnomalyImageThumbnail extends StatelessWidget {
+  const _AnomalyImageThumbnail({
+    required this.imageUrl,
+  });
+
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => _showImageDialog(context),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          height: 92,
+          width: 132,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) {
+                return child;
+              }
+              return const ColoredBox(
+                color: Color(0x11000000),
+                child: Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return const ColoredBox(
+                color: Color(0x11000000),
+                child: Center(
+                  child: Icon(Icons.broken_image_outlined),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showImageDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(18),
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: <Widget>[
+              InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 4,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) {
+                      return child;
+                    }
+                    return const SizedBox(
+                      height: 320,
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return const SizedBox(
+                      height: 240,
+                      child: Center(child: Icon(Icons.broken_image_outlined)),
+                    );
+                  },
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton.filledTonal(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
