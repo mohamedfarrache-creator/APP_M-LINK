@@ -160,16 +160,6 @@ class HybridMaintenanceRepository extends MaintenanceRepository {
   @override
   Future<void> submitIntervention(Intervention intervention) async {
     _interventions.insert(0, intervention);
-
-    final machineIndex =
-        _machines.indexWhere((machine) => machine.id == intervention.machineId);
-    if (machineIndex >= 0) {
-      final updated = _machines[machineIndex].copyWith(
-        status: MachineStatus.anomaly,
-      );
-      _machines[machineIndex] = updated;
-      await _machineStore.updateMachine(updated);
-    }
     notifyListeners();
 
     if (!_remoteReady) {

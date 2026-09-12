@@ -36,7 +36,12 @@ class Machine {
 }
 
 class PreventiveCalendarScreen extends StatefulWidget {
-  const PreventiveCalendarScreen({super.key});
+  const PreventiveCalendarScreen({
+    super.key,
+    this.initialWeek,
+  });
+
+  final int? initialWeek;
 
   @override
   State<PreventiveCalendarScreen> createState() =>
@@ -46,7 +51,7 @@ class PreventiveCalendarScreen extends StatefulWidget {
 class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
   final Map<String, bool> _validated = <String, bool>{};
 
-  int selectedWeek = _isoWeek(DateTime.now());
+  late int selectedWeek;
   bool _loading = true;
   String? _error;
   List<List<dynamic>> currentCsvData = <List<dynamic>>[];
@@ -57,6 +62,7 @@ class _PreventiveCalendarScreenState extends State<PreventiveCalendarScreen> {
   @override
   void initState() {
     super.initState();
+    selectedWeek = widget.initialWeek ?? _isoWeek(DateTime.now());
     _bootstrapProjects();
   }
 

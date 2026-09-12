@@ -39,6 +39,9 @@ class _MLinkAppState extends State<MLinkApp> {
   AppUser? _currentUser;
   int _index = 0;
   ThemeMode _themeMode = ThemeMode.light;
+  double _textScaleFactor = 1.0;
+  bool _useCurrentWeekAsDefault = true;
+  int _chosenDefaultWeek = _isoWeekNumber(DateTime.now());
   Uint8List? _profileImageBytes;
 
   @override
@@ -67,6 +70,22 @@ class _MLinkAppState extends State<MLinkApp> {
   void _onThemeChanged(bool isDark) {
     setState(() {
       _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  void _onTextScaleChanged(double value) {
+    setState(() {
+      _textScaleFactor = value;
+    });
+  }
+
+  void _onDefaultCalendarWeekChanged({
+    required bool useCurrentWeek,
+    required int chosenWeek,
+  }) {
+    setState(() {
+      _useCurrentWeekAsDefault = useCurrentWeek;
+      _chosenDefaultWeek = chosenWeek;
     });
   }
 
@@ -109,6 +128,15 @@ class _MLinkAppState extends State<MLinkApp> {
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,
           themeMode: _themeMode,
+          builder: (context, child) {
+            final mediaQuery = MediaQuery.of(context);
+            return MediaQuery(
+              data: mediaQuery.copyWith(
+                textScaler: TextScaler.linear(_textScaleFactor),
+              ),
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
           home: FutureBuilder<void>(
             future: _initFuture,
             builder: (context, snapshot) {
@@ -131,6 +159,12 @@ class _MLinkAppState extends State<MLinkApp> {
                       onLogout: _logout,
                       isDarkMode: _themeMode == ThemeMode.dark,
                       onThemeChanged: _onThemeChanged,
+                      textScaleFactor: _textScaleFactor,
+                      onTextScaleChanged: _onTextScaleChanged,
+                      useCurrentWeekAsDefault: _useCurrentWeekAsDefault,
+                      chosenDefaultWeek: _chosenDefaultWeek,
+                      onDefaultCalendarWeekChanged:
+                          _onDefaultCalendarWeekChanged,
                       profileImageBytes: _profileImageBytes,
                       onProfileImageChanged: _onProfileImageChanged,
                       onPasswordChanged: _onPasswordChanged,
@@ -152,6 +186,11 @@ class _HomeShell extends StatelessWidget {
     required this.onLogout,
     required this.isDarkMode,
     required this.onThemeChanged,
+    required this.textScaleFactor,
+    required this.onTextScaleChanged,
+    required this.useCurrentWeekAsDefault,
+    required this.chosenDefaultWeek,
+    required this.onDefaultCalendarWeekChanged,
     required this.profileImageBytes,
     required this.onProfileImageChanged,
     required this.onPasswordChanged,
@@ -164,6 +203,14 @@ class _HomeShell extends StatelessWidget {
   final VoidCallback onLogout;
   final bool isDarkMode;
   final ValueChanged<bool> onThemeChanged;
+  final double textScaleFactor;
+  final ValueChanged<double> onTextScaleChanged;
+  final bool useCurrentWeekAsDefault;
+  final int chosenDefaultWeek;
+  final void Function({
+    required bool useCurrentWeek,
+    required int chosenWeek,
+  }) onDefaultCalendarWeekChanged;
   final Uint8List? profileImageBytes;
   final ValueChanged<Uint8List?> onProfileImageChanged;
   final Future<bool> Function(String currentPassword, String newPassword)
@@ -176,7 +223,9 @@ class _HomeShell extends StatelessWidget {
         user: user,
         repository: repository,
       ),
-      const PreventiveCalendarScreen(),
+      PreventiveCalendarScreen(
+        initialWeek: useCurrentWeekAsDefault ? null : chosenDefaultWeek,
+      ),
       PlantMapView(
         repository: repository,
         isAdmin: user.role == UserRole.admin,
@@ -215,8 +264,8 @@ class _HomeShell extends StatelessWidget {
         label: 'Carte',
       ),
       const BottomNavigationBarItem(
-        icon: Icon(Icons.campaign_outlined),
-        label: 'Signaler',
+        icon: Icon(Icons.assignment_outlined),
+        label: 'Intervention',
       ),
       if (user.role == UserRole.admin)
         const BottomNavigationBarItem(
@@ -254,8 +303,16 @@ class _HomeShell extends StatelessWidget {
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => SettingsScreen(
+            user: user,
             isDarkMode: isDarkMode,
             onThemeChanged: onThemeChanged,
+            textScaleFactor: textScaleFactor,
+            onTextScaleChanged: onTextScaleChanged,
+            useCurrentWeekAsDefault: useCurrentWeekAsDefault,
+            chosenDefaultWeek: chosenDefaultWeek,
+            onDefaultCalendarWeekChanged: onDefaultCalendarWeekChanged,
+            onPasswordChanged: onPasswordChanged,
+            onLogout: onLogout,
           ),
         ),
       );
@@ -304,4 +361,11 @@ class _HomeShell extends StatelessWidget {
       ),
     );
   }
+}
+
+int _isoWeekNumber(DateTime date) {
+  final thursday = date.add(Duration(days: 4 - date.weekday));
+  final firstDayOfYear = DateTime(thursday.year, 1, 1);
+  final dayOfYear = thursday.difference(firstDayOfYear).inDays + 1;
+  return ((dayOfYear - 1) / 7).floor() + 1;
 }

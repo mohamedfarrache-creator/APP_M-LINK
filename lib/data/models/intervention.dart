@@ -16,7 +16,14 @@ class Intervention {
     required this.description,
     required this.createdAtIso,
     required this.forKw,
-    this.imageUrl,
+    this.contrePiece = '',
+    this.niveau = '1',
+    this.heureDebut = '',
+    this.heureFin = '',
+    this.tempsProd = 0,
+    this.tempsTech = 0,
+    this.shift = 'A',
+    this.imageUrls = const <String>[],
     this.isRead = false,
     this.status = 'open',
   });
@@ -33,11 +40,31 @@ class Intervention {
   final String description;
   final String createdAtIso;
   final int forKw;
-  final String? imageUrl;
+  final String contrePiece;
+  final String niveau;
+  final String heureDebut;
+  final String heureFin;
+  final int tempsProd;
+  final int tempsTech;
+  final String shift;
+  final List<String> imageUrls;
   final bool isRead;
   final String status;
 
+  String? get imageUrl => imageUrls.isEmpty ? null : imageUrls.first;
+
   factory Intervention.fromJson(Map<String, dynamic> json) {
+    final imageUrls = (json['imageUrls'] as List<dynamic>? ?? const <dynamic>[])
+        .map((item) => item.toString())
+        .where((item) => item.trim().isNotEmpty)
+        .toList();
+    final legacyImageUrl = json['imageUrl'] as String?;
+    if (imageUrls.isEmpty &&
+        legacyImageUrl != null &&
+        legacyImageUrl.trim().isNotEmpty) {
+      imageUrls.add(legacyImageUrl);
+    }
+
     return Intervention(
       id: json['id'] as String,
       machineId: json['machineId'] as String,
@@ -55,9 +82,17 @@ class Intervention {
       ),
       title: json['title'] as String,
       description: json['description'] as String,
-      createdAtIso: json['createdAtIso'] as String,
-      forKw: json['forKw'] as int,
-      imageUrl: json['imageUrl'] as String?,
+      createdAtIso:
+          json['createdAtIso'] as String? ?? DateTime.now().toIso8601String(),
+      forKw: json['forKw'] as int? ?? 0,
+      contrePiece: json['contrePiece'] as String? ?? '',
+      niveau: json['niveau'] as String? ?? '1',
+      heureDebut: json['heureDebut'] as String? ?? '',
+      heureFin: json['heureFin'] as String? ?? '',
+      tempsProd: _readInt(json['tempsProd']),
+      tempsTech: _readInt(json['tempsTech']),
+      shift: json['shift'] as String? ?? 'A',
+      imageUrls: imageUrls,
       isRead: json['isRead'] as bool? ?? false,
       status: json['status'] as String? ?? 'open',
     );
@@ -77,9 +112,30 @@ class Intervention {
       'description': description,
       'createdAtIso': createdAtIso,
       'forKw': forKw,
+      'contrePiece': contrePiece,
+      'niveau': niveau,
+      'heureDebut': heureDebut,
+      'heureFin': heureFin,
+      'tempsProd': tempsProd,
+      'tempsTech': tempsTech,
+      'shift': shift,
       'imageUrl': imageUrl,
+      'imageUrls': imageUrls,
       'isRead': isRead,
       'status': status,
     };
+  }
+
+  static int _readInt(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.round();
+    }
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+    return 0;
   }
 }

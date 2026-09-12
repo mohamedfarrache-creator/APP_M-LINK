@@ -6,6 +6,7 @@ import '../../data/models/machine.dart';
 import '../../data/repositories/maintenance_repository.dart';
 import 'delayed_machines_list_screen.dart';
 import 'open_anomalies_list_screen.dart';
+import 'recent_interventions_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({
@@ -25,11 +26,11 @@ class DashboardScreen extends StatelessWidget {
         .where((machine) => machine.status == MachineStatus.due)
         .toList();
     final List<Intervention> openAnomalies = repository.interventions
-        .where((item) => item.status.toLowerCase() == 'open')
+        .where((item) =>
+            item.type == InterventionType.anomaly &&
+            item.status.toLowerCase() == 'open')
         .toList();
-    final interventionsThisWeek = repository.interventions
-        .where((item) => item.forKw == _isoWeekNumber(DateTime.now()))
-        .length;
+    final recentInterventionsCount = _recentInterventions(repository).length;
 
     final cards = <Widget>[
       KpiCard(
@@ -60,10 +61,17 @@ class DashboardScreen extends StatelessWidget {
         },
       ),
       KpiCard(
-        title: 'Interventions (Semaine)',
-        value: '$interventionsThisWeek',
+        title: 'Interventions recentes',
+        value: '$recentInterventionsCount',
         accent: const Color(0xFF00B4D8),
-        icon: Icons.calendar_month_outlined,
+        icon: Icons.history_outlined,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => RecentInterventionsScreen(repository: repository),
+            ),
+          );
+        },
       ),
       const KpiCard(
         title: 'Taux de realisation',
@@ -201,12 +209,12 @@ class KpiCard extends StatelessWidget {
   }
 }
 
-int _isoWeekNumber(DateTime date) {
-  final firstDayOfYear = DateTime(date.year, 1, 1);
-  final daysOffset = DateTime.thursday - firstDayOfYear.weekday;
-  final firstThursday = firstDayOfYear.add(Duration(days: daysOffset));
-  final difference = date.difference(firstThursday);
-  return 1 + (difference.inDays / 7).floor();
+List<Intervention> _recentInterventions(MaintenanceRepository repository) {
+  final since = DateTime.now().subtract(const Duration(hours: 24));
+  return repository.interventions.where((item) {
+    final createdAt = DateTime.tryParse(item.createdAtIso);
+    return createdAt != null && !createdAt.isBefore(since);
+  }).toList(growable: false);
 }
 
 class _KpiStandardContent extends StatelessWidget {

@@ -36,13 +36,15 @@ class FirebaseMaintenanceRepository extends MaintenanceRepository {
   List<Machine> get machines => List<Machine>.from(_machines);
 
   @override
-  List<Intervention> get interventions => List<Intervention>.from(_interventions);
+  List<Intervention> get interventions =>
+      List<Intervention>.from(_interventions);
 
   @override
   List<AppUser> get users => List<AppUser>.from(_users);
 
   @override
-  List<ProjectCalendar> get projectCalendars => List<ProjectCalendar>.from(_projectCalendars);
+  List<ProjectCalendar> get projectCalendars =>
+      List<ProjectCalendar>.from(_projectCalendars);
 
   @override
   Future<void> initialize() async {
@@ -131,7 +133,8 @@ class FirebaseMaintenanceRepository extends MaintenanceRepository {
     final updated = machine.copyWith(
       status: MachineStatus.ok,
       nextKw: machine.nextKw + 1,
-      checklist: machine.checklist.map((item) => item.copyWith(done: true)).toList(),
+      checklist:
+          machine.checklist.map((item) => item.copyWith(done: true)).toList(),
     );
     _machines[index] = updated;
     notifyListeners();
@@ -145,29 +148,14 @@ class FirebaseMaintenanceRepository extends MaintenanceRepository {
   @override
   Future<void> submitIntervention(Intervention intervention) async {
     _interventions.insert(0, intervention);
-
-    final machineIndex = _machines.indexWhere((machine) => machine.id == intervention.machineId);
-    if (machineIndex >= 0) {
-      _machines[machineIndex] = _machines[machineIndex].copyWith(
-        status: MachineStatus.anomaly,
-      );
-    }
     notifyListeners();
 
-    final batch = _firestore.batch();
-    final interventionRef = _firestore.collection('interventions').doc(intervention.id);
-    batch.set(interventionRef, intervention.toJson(), SetOptions(merge: true));
-
-    final machineRef = _firestore.collection('machines').doc(intervention.machineId);
-    batch.set(
-      machineRef,
-      {
-        'status': MachineStatus.anomaly.name,
-      },
+    final interventionRef =
+        _firestore.collection('interventions').doc(intervention.id);
+    await interventionRef.set(
+      intervention.toJson(),
       SetOptions(merge: true),
     );
-
-    await batch.commit();
   }
 
   @override
@@ -260,7 +248,9 @@ class FirebaseMaintenanceRepository extends MaintenanceRepository {
 
   @override
   int dueTasksCount() {
-    return _machines.where((machine) => machine.status == MachineStatus.due).length;
+    return _machines
+        .where((machine) => machine.status == MachineStatus.due)
+        .length;
   }
 
   Future<void> _ensureSeedData() async {
@@ -301,7 +291,8 @@ class FirebaseMaintenanceRepository extends MaintenanceRepository {
   }
 
   void _listenToCollections() {
-    _machinesSub = _firestore.collection('machines').snapshots().listen((snapshot) {
+    _machinesSub =
+        _firestore.collection('machines').snapshots().listen((snapshot) {
       final items = snapshot.docs
           .map((doc) => Machine.fromJson(_dataWithId(doc)))
           .toList(growable: false);
@@ -329,17 +320,20 @@ class FirebaseMaintenanceRepository extends MaintenanceRepository {
       notifyListeners();
     });
 
-    _calendarsSub =
-        _firestore.collection('project_calendars').snapshots().listen((snapshot) {
+    _calendarsSub = _firestore
+        .collection('project_calendars')
+        .snapshots()
+        .listen((snapshot) {
       final items = snapshot.docs.map((doc) {
         final data = _dataWithId(doc);
         return ProjectCalendar(
           project: data['project'] as String,
           sourceFile: data['sourceFile'] as String,
           machineType: data['machineType'] as String,
-          drsNumbers: (data['drsNumbers'] as List<dynamic>? ?? const <dynamic>[])
-              .map((item) => item.toString())
-              .toList(),
+          drsNumbers:
+              (data['drsNumbers'] as List<dynamic>? ?? const <dynamic>[])
+                  .map((item) => item.toString())
+                  .toList(),
         );
       }).toList(growable: false);
       items.sort((a, b) => a.project.compareTo(b.project));
